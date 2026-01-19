@@ -2,21 +2,21 @@
 
 ## Overview
 
-The PPR (Personal Pattern Recognition) system matches user selections across 3 layers (checkpoints) to one of 8 predefined patterns per question. Each pattern provides personalized insight text based on the user's choices.
+The PPR (Personal Pattern Recognition) system matches user selections across 3 checkpoints to one of 8 predefined patterns per question. Each pattern provides personalized insight text based on the user's choices.
 
 ---
 
 ## How It Works
 
-### The 3 Layers (Checkpoints)
+### The 3 Checkpoints
 
-Each question has 3 layers of choices:
+Each question has 3 checkpoint of choices:
 
 | Layer | Name | Selection Type | Purpose |
 |-------|------|----------------|---------|
-| **CP1** (Layer 1) | Position | Single select | User's primary stance/priority |
-| **CP2** (Layer 2) | Concerns | Multi-select (2-3 options) | User's fears/concerns |
-| **CP3** (Layer 3) | Change Factor | Single select | What might change their mind |
+| **CP1** (Checkpoint 1) | Position | Single select | User's primary stance/priority |
+| **CP2** (Checkpoint 2) | Concerns | Multi-select (2-3 options) | User's fears/concerns |
+| **CP3** (Checkpoint 3) | Change Factor | Single select | What might change their mind |
 
 ### Matching Priority
 
@@ -187,7 +187,7 @@ Step 7: If still no match → Return no_match
 
 1. Go to the question (Q10A, Q10B, Q11, or Q12)
 2. Select options as specified in each test case
-3. Complete all 3 layers and reach the Summary page
+3. Complete all 3 checkpoints and reach the Summary page
 4. Check the PPR text displayed matches the expected pattern
 
 ### How to Test via API (curl)
