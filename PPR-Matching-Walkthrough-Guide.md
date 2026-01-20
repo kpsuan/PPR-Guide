@@ -172,16 +172,6 @@ Step 7: If still no match → Return no_match
 3. Complete all 3 checkpoints and reach the Summary page
 4. Check the PPR text displayed matches the expected pattern
 
-### How to Test via API (curl)
-
-```bash
-curl -X POST http://localhost:8000/api/v1/content/questions/{QUESTION_ID}/ppr/match/ \
-  -H "Content-Type: application/json" \
-  -d '{"cp1_selection": X, "cp2_selections": [X, Y], "cp3_selection": Z}'
-```
-
----
-
 ## Q10A Test Cases
 
 ### Test Q10A-1: Primary Match (Unique Anchor)
