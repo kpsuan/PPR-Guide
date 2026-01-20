@@ -163,78 +163,6 @@ Step 7: If still no match → Return no_match
 
 ---
 
-## Database Schema
-
-### PPRAnchorConfiguration Model
-
-| Field | Type | Description |
-|-------|------|-------------|
-| ppr_pattern | FK | Links to PersonalPatternRecognition |
-| cp1_anchors | int[] | CP1 values that trigger this pattern |
-| cp3_anchors | int[] | CP3 values that trigger this pattern |
-| cp2_required | int[] | CP2 MUST include one of these (rare) |
-| cp2_preferred | int[] | For tiebreaker scoring |
-| is_fallback | bool | Is this a catch-all pattern? |
-| fallback_for_cp1 | int[] | CP1 values this catches as fallback |
-| priority | int | Higher = preferred when scores tie |
-
----
-
-## Django Admin Configuration
-
-You can configure PPR anchor specifications via the Django Admin panel.
-
-### Accessing the Admin
-
-1. Go to `http://localhost:8000/admin/`
-2. Log in with your superuser credentials
-3. Navigate to **Content** > **PPR Anchor Configurations**
-
-### Configuring an Anchor
-
-Each PPR pattern can have an anchor configuration with these fields:
-
-| Field | How to Configure |
-|-------|------------------|
-| **PPR Pattern** | Select the PersonalPatternRecognition pattern to configure |
-| **CP1 Anchors** | Enter CP1 option numbers (e.g., `1,2` for options 1 and 2) |
-| **CP3 Anchors** | Enter CP3 option numbers that trigger this pattern |
-| **CP2 Required** | Enter CP2 options that MUST be selected (leave empty if not required) |
-| **CP2 Preferred** | Enter CP2 options used for tiebreaker scoring |
-| **Is Fallback** | Check if this is a catch-all pattern |
-| **Fallback for CP1** | If fallback, enter CP1 values this catches |
-| **Priority** | Higher number = preferred when scores tie (default: 0) |
-
-### Example: Configuring Q10A Pattern 4 vs Pattern 7
-
-Both patterns share CP1=2, CP3=11, so they need different priorities:
-
-**Pattern 4 Config:**
-- CP1 Anchors: `2`
-- CP3 Anchors: `11`
-- CP2 Preferred: `7`
-- Priority: `1` (default winner)
-
-**Pattern 7 Config:**
-- CP1 Anchors: `2`
-- CP3 Anchors: `11`
-- CP2 Preferred: `5`
-- Priority: `0` (only wins if user selects option 5)
-
-### Seeding Anchor Configurations
-
-You can also seed anchor configs via management command:
-
-```bash
-# Seed all anchor configurations
-python manage.py seed_ppr_anchors
-
-# Seed specific question only
-python manage.py seed_ppr_anchors --question Q10A
-```
-
----
-
 ## Complete Test Suite
 
 ### How to Test in Frontend
@@ -634,54 +562,55 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ## Summary: All Pattern Coverage
 
 ### Q10A Patterns
-| Pattern | CP1 | CP3 | Test Command |
-|---------|-----|-----|--------------|
-| 1 | 2 | 10 | `{"cp1_selection": 2, "cp2_selections": [4], "cp3_selection": 10}` |
-| 2 | 1 | 9 | `{"cp1_selection": 1, "cp2_selections": [6], "cp3_selection": 9}` |
-| 3 | 3 | 10 | `{"cp1_selection": 3, "cp2_selections": [5], "cp3_selection": 10}` |
-| 4 | 2 | 11 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 11}` |
-| 5 | 1 | 8 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 8}` |
-| 6 | 3 | 9 | `{"cp1_selection": 3, "cp2_selections": [6], "cp3_selection": 9}` |
-| 7 | 2 | 11 | `{"cp1_selection": 2, "cp2_selections": [5], "cp3_selection": 11}` |
-| 8 | 1 | 10 | `{"cp1_selection": 1, "cp2_selections": [7], "cp3_selection": 10}` |
+| Pattern | CP1 | CP3 | CP2 Preferred | Test Command |
+|---------|-----|-----|---------------|--------------|
+| 1 Informed Conditional Thinking | 2 | 10 | 4 | `{"cp1_selection": 2, "cp2_selections": [4], "cp3_selection": 10}` |
+| 2 Absolute Conviction + Relational Concern | 1 | 9 | 6 | `{"cp1_selection": 1, "cp2_selections": [6], "cp3_selection": 9}` |
+| 3 Function-Focused + Knowledge Gaps | 3 | 10 | 5 | `{"cp1_selection": 3, "cp2_selections": [5], "cp3_selection": 10}` |
+| 4 Trauma-Informed Reconsidering | 2 | 11 | 7 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 11}` |
+| 5 Determined Autonomy + Systemic Awareness | 1 | 8 | 4 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 8}` |
+| 6 Values-Driven + Relationship Concern | 3 | 9 | 6 | `{"cp1_selection": 3, "cp2_selections": [6], "cp3_selection": 9}` |
+| 7 Epistemic Humility | 2 | 11 | 5 | `{"cp1_selection": 2, "cp2_selections": [5], "cp3_selection": 11}` |
+| 8 Conviction + Information-Seeking | 1 | 10 | 7 | `{"cp1_selection": 1, "cp2_selections": [7], "cp3_selection": 10}` |
 
 ### Q10B Patterns
-| Pattern | CP1 | CP3 | Test Command |
-|---------|-----|-----|--------------|
-| 1 | 1 | 8 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 8}` |
-| 2 | 2 | 9 | `{"cp1_selection": 2, "cp2_selections": [6], "cp3_selection": 9}` |
-| 3 | 3 | 10 | `{"cp1_selection": 3, "cp2_selections": [5], "cp3_selection": 10}` |
-| 4 | 1 | 11 | `{"cp1_selection": 1, "cp2_selections": [7], "cp3_selection": 11}` |
-| 5 | 2 | 9 | `{"cp1_selection": 2, "cp2_selections": [4], "cp3_selection": 9}` |
-| 6 | 3 | 8 | `{"cp1_selection": 3, "cp2_selections": [4, 6], "cp3_selection": 8}` |
-| 7 | 2 | 11 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 11}` |
-| 8 | 1 | 10 | `{"cp1_selection": 1, "cp2_selections": [6], "cp3_selection": 10}` |
+| Pattern | CP1 | CP3 | CP2 Preferred | Test Command |
+|---------|-----|-----|---------------|--------------|
+| 1 Firm Conviction + Evidence-Seeking | 1 | 8 | 4 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 8}` |
+| 2 Individual vs Relational Values | 2 | 9 | 6 | `{"cp1_selection": 2, "cp2_selections": [6], "cp3_selection": 9}` |
+| 3 Threshold-Focused + Hope | 3 | 10 | 5 | `{"cp1_selection": 3, "cp2_selections": [5], "cp3_selection": 10}` |
+| 4 Philosophical Courage | 1 | 11 | 7 | `{"cp1_selection": 1, "cp2_selections": [7], "cp3_selection": 11}` |
+| 5 Cognitive to Relational Shift | 2 | 9 | 4 | `{"cp1_selection": 2, "cp2_selections": [4], "cp3_selection": 9}` |
+| 6 Epistemically Humble Planning | 3 | 8 | 4+6 | `{"cp1_selection": 3, "cp2_selections": [4, 6], "cp3_selection": 8}` |
+| 7 Openness to Paradigm Shift | 2 | 11 | 7 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 11}` |
+| 8 Layered Hope | 1 | 10 | 6 | `{"cp1_selection": 1, "cp2_selections": [6], "cp3_selection": 10}` |
 
 ### Q11 Patterns
-| Pattern | CP1 | CP3 | Test Command |
-|---------|-----|-----|--------------|
-| 1 | 1 | 10 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 10}` |
-| 2 | 1 | 12 | `{"cp1_selection": 1, "cp2_selections": [6], "cp3_selection": 12}` |
-| 3 | 2 | 13 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 13}` |
-| 4 | 3 | 14 | `{"cp1_selection": 3, "cp2_selections": [5], "cp3_selection": 14}` |
-| 5 | 1 | 15 | `{"cp1_selection": 1, "cp2_selections": [8], "cp3_selection": 15}` |
-| 6 | 2 | 10 | `{"cp1_selection": 2, "cp2_selections": [6], "cp3_selection": 10}` |
-| 7 | 3 | 12 | `{"cp1_selection": 3, "cp2_selections": [7], "cp3_selection": 12}` |
-| 8 | 1 | 15 | `{"cp1_selection": 1, "cp2_selections": [9], "cp3_selection": 15}` |
+| Pattern | CP1 | CP3 | CP2 Preferred | Test Command |
+|---------|-----|-----|---------------|--------------|
+| 1 Clear Priority + Provider Barrier | 1 | 10 | 4 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 10}` |
+| 2 Comfort vs Consciousness Tension | 1 | 12 | 6 | `{"cp1_selection": 1, "cp2_selections": [6], "cp3_selection": 12}` |
+| 3 Balance + Spiritual Integration | 2 | 13 | 7 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 13}` |
+| 4 Values-Driven + Cultural Need | 3 | 14 | 5 | `{"cp1_selection": 3, "cp2_selections": [5], "cp3_selection": 14}` |
+| 5 Priority + Disparity Awareness | 1 | 15 | 8 | `{"cp1_selection": 1, "cp2_selections": [8], "cp3_selection": 15}` |
+| 6 Balance + Consciousness Fear | 2 | 10 | 6 | `{"cp1_selection": 2, "cp2_selections": [6], "cp3_selection": 10}` |
+| 7 Goals Over Comfort + Holistic View | 3 | 12 | 7 | `{"cp1_selection": 3, "cp2_selections": [7], "cp3_selection": 12}` |
+| 8 Priority + Communication Gap | 1 | 15 | 9 | `{"cp1_selection": 1, "cp2_selections": [9], "cp3_selection": 15}` |
 
 ### Q12 Patterns
-| Pattern | CP1 | CP3 | Test Command |
-|---------|-----|-----|--------------|
-| 1 Independence Maximalist | 1 | 15 | `{"cp1_selection": 1, "cp2_selections": [5], "cp3_selection": 15}` |
-| 2 Family Protector | 1 | 14 | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 14}` |
-| 3 Structural Realist | 3 | 12 | `{"cp1_selection": 3, "cp2_selections": [8], "cp3_selection": 12}` |
-| 4 Quality Focused | 2 | 11 | `{"cp1_selection": 2, "cp2_selections": [6], "cp3_selection": 11}` |
-| 5 Cultural Navigator | 2 | 13 | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 13}` |
-| 6 Voice Protector | 1 | 10 | `{"cp1_selection": 1, "cp2_selections": [9], "cp3_selection": 10}` |
-| 7 Interdependence Seeker | 3 | 10 | `{"cp1_selection": 3, "cp2_selections": [4], "cp3_selection": 10}` |
-| 8 Open Explorer | 2 | 11 | `{"cp1_selection": 2, "cp2_selections": [5], "cp3_selection": 11}` |
+| Pattern | CP1 | CP3 | CP2 Note | Test Command |
+|---------|-----|-----|----------|--------------|
+| 1 Independence Maximalist | 1 | 15 | 5 preferred | `{"cp1_selection": 1, "cp2_selections": [5], "cp3_selection": 15}` |
+| 2 Family Protector | 1 OR 2 | 14 | 4 preferred | `{"cp1_selection": 1, "cp2_selections": [4], "cp3_selection": 14}` |
+| 3 Structural Realist | 3 | 12 | 8 preferred | `{"cp1_selection": 3, "cp2_selections": [8], "cp3_selection": 12}` |
+| 4 Quality Focused | 2 OR 3 | 11 | 6 preferred | `{"cp1_selection": 2, "cp2_selections": [6], "cp3_selection": 11}` |
+| 5 Cultural Navigator | ANY | 13 | 7 REQUIRED | `{"cp1_selection": 2, "cp2_selections": [7], "cp3_selection": 13}` |
+| 6 Voice Protector | 1 | 10 OR 12 | 9 preferred | `{"cp1_selection": 1, "cp2_selections": [9], "cp3_selection": 10}` |
+| 7 Interdependence Seeker | 3 | 10 | 4 OR 5 preferred | `{"cp1_selection": 3, "cp2_selections": [4], "cp3_selection": 10}` |
+| 8 Open Explorer | 2 | ANY | catch-all | `{"cp1_selection": 2, "cp2_selections": [5], "cp3_selection": 11}` |
 
 ---
+
 
 ## Quick Reference: All Questions
 
