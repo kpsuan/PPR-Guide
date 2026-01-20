@@ -512,26 +512,9 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ```
 
 ---
-
-### Edge Case 2: Multiple CP2 Selections (3 options)
-| Checkpoint | Select | Option Text |
-|------------|--------|-------------|
-| CP1 | Option 2 | Somewhat important |
-| CP2 | Options 4, 5, 7 | Provider bias + Uncertainty + Witnessed |
-| CP3 | Option 11 | Disability understanding |
-
-**Expected:** Pattern 4 (has 7) or Pattern 7 (has 5) - both score 1, Pattern 4 wins by priority
-**Match Type:** `tiebreaker`
-
-```bash
-curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
-  -H "Content-Type: application/json" \
-  -d '{"cp1_selection": 2, "cp2_selections": [4, 5, 7], "cp3_selection": 11}'
-```
-
 ---
 
-### Edge Case 3: Single CP2 Selection
+### Edge Case 2: Single CP2 Selection
 | Checkpoint | Select | Option Text |
 |------------|--------|-------------|
 | CP1 | Option 1 | Very important |
