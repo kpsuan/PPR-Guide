@@ -10,10 +10,10 @@ The PPR (Personal Pattern Recognition) system matches user selections across 3 c
 
 ### The 3 Checkpoints
 
-Each question has 3 checkpoint of choices:
+Each question has 3 checkpoints of choices:
 
-| Layer | Name | Selection Type | Purpose |
-|-------|------|----------------|---------|
+| Checkpoint | Name | Selection Type | Purpose |
+|------------|------|----------------|---------|
 | **CP1** (Checkpoint 1) | Position | Single select | User's primary stance/priority |
 | **CP2** (Checkpoint 2) | Concerns | Multi-select (2-3 options) | User's fears/concerns |
 | **CP3** (Checkpoint 3) | Change Factor | Single select | What might change their mind |
@@ -61,14 +61,14 @@ Step 7: If still no match → Return no_match
 
 ### Option Mapping for Q10A
 
-**Layer 1 (CP1) - Position:**
+**Checkpoint 1 (CP1) - Position:**
 | Option # | Text |
 |----------|------|
 | 1 | Very important - I want maximum intervention |
 | 2 | Somewhat important - depends on situation |
 | 3 | Avoid aggressive intervention |
 
-**Layer 2 (CP2) - Concerns:**
+**Checkpoint 2 (CP2) - Concerns:**
 | Option # | Text |
 |----------|------|
 | 4 | Provider bias against disability |
@@ -76,7 +76,7 @@ Step 7: If still no match → Return no_match
 | 6 | Fear of burdening family |
 | 7 | Witnessed others struggle |
 
-**Layer 3 (CP3) - Change Factor:**
+**Checkpoint 3 (CP3) - Change Factor:**
 | Option # | Text |
 |----------|------|
 | 8 | Meeting someone with disability |
@@ -108,9 +108,9 @@ Step 7: If still no match → Return no_match
 ### Test 1: Primary Match (Unique CP1+CP3)
 
 **Selections:**
-- Layer 1: Option 2 (Somewhat important)
-- Layer 2: Options 4 and 6
-- Layer 3: Option 10 (Medical education)
+- Checkpoint 1: Option 2 (Somewhat important)
+- Checkpoint 2: Options 4 and 6
+- Checkpoint 3: Option 10 (Medical education)
 
 **Algorithm:**
 1. CP1=2 → Patterns 1, 4, 7 match
@@ -125,9 +125,9 @@ Step 7: If still no match → Return no_match
 ### Test 2: Tiebreaker (Shared CP1+CP3)
 
 **Selections:**
-- Layer 1: Option 2 (Somewhat important)
-- Layer 2: Options 5 and 7
-- Layer 3: Option 11 (Disability understanding)
+- Checkpoint 1: Option 2 (Somewhat important)
+- Checkpoint 2: Options 5 and 7
+- Checkpoint 3: Option 11 (Disability understanding)
 
 **Algorithm:**
 1. CP1=2 → Patterns 1, 4, 7 match
@@ -147,9 +147,9 @@ Step 7: If still no match → Return no_match
 ### Test 3: CP2 Determines Winner
 
 **Selections:**
-- Layer 1: Option 2
-- Layer 2: Option 7 only (witnessed struggle)
-- Layer 3: Option 11
+- Checkpoint 1: Option 2
+- Checkpoint 2: Option 7 only (witnessed struggle)
+- Checkpoint 3: Option 11
 
 **Algorithm:**
 1. CP1=2, CP3=11 → Patterns 4 and 7 match
@@ -180,6 +180,60 @@ Step 7: If still no match → Return no_match
 
 ---
 
+## Django Admin Configuration
+
+You can configure PPR anchor specifications via the Django Admin panel.
+
+### Accessing the Admin
+
+1. Go to `http://localhost:8000/admin/`
+2. Log in with your superuser credentials
+3. Navigate to **Content** > **PPR Anchor Configurations**
+
+### Configuring an Anchor
+
+Each PPR pattern can have an anchor configuration with these fields:
+
+| Field | How to Configure |
+|-------|------------------|
+| **PPR Pattern** | Select the PersonalPatternRecognition pattern to configure |
+| **CP1 Anchors** | Enter CP1 option numbers (e.g., `1,2` for options 1 and 2) |
+| **CP3 Anchors** | Enter CP3 option numbers that trigger this pattern |
+| **CP2 Required** | Enter CP2 options that MUST be selected (leave empty if not required) |
+| **CP2 Preferred** | Enter CP2 options used for tiebreaker scoring |
+| **Is Fallback** | Check if this is a catch-all pattern |
+| **Fallback for CP1** | If fallback, enter CP1 values this catches |
+| **Priority** | Higher number = preferred when scores tie (default: 0) |
+
+### Example: Configuring Q10A Pattern 4 vs Pattern 7
+
+Both patterns share CP1=2, CP3=11, so they need different priorities:
+
+**Pattern 4 Config:**
+- CP1 Anchors: `2`
+- CP3 Anchors: `11`
+- CP2 Preferred: `7`
+- Priority: `1` (default winner)
+
+**Pattern 7 Config:**
+- CP1 Anchors: `2`
+- CP3 Anchors: `11`
+- CP2 Preferred: `5`
+- Priority: `0` (only wins if user selects option 5)
+
+### Seeding Anchor Configurations
+
+You can also seed anchor configs via management command:
+
+```bash
+# Seed all anchor configurations
+python manage.py seed_ppr_anchors
+
+# Seed specific question only
+python manage.py seed_ppr_anchors --question Q10A
+```
+
+---
 
 ## Complete Test Suite
 
@@ -203,11 +257,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/{QUESTION_ID}/ppr/ma
 ## Q10A Test Cases
 
 ### Test Q10A-1: Primary Match (Unique Anchor)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Options 4, 6 | Provider bias + Burden |
-| L3 | Option 10 | Medical education |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Options 4, 6 | Provider bias + Burden |
+| CP3 | Option 10 | Medical education |
 
 **Expected:** Pattern 1 - "Conditional Position + Provider Bias + Education Need"
 **Match Type:** `primary`
@@ -222,11 +276,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Test Q10A-2: Tiebreaker - Both CP2 Match (Priority Wins)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Options 5, 7 | Uncertainty + Witnessed |
-| L3 | Option 11 | Disability understanding |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Options 5, 7 | Uncertainty + Witnessed |
+| CP3 | Option 11 | Disability understanding |
 
 **Expected:** Pattern 4 - "Conditional Position + Witnessed Struggle + Disability Understanding"
 **Match Type:** `tiebreaker`
@@ -241,11 +295,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Test Q10A-3: Tiebreaker - CP2 Score Determines Winner
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Option 5 only | Uncertainty |
-| L3 | Option 11 | Disability understanding |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Option 5 only | Uncertainty |
+| CP3 | Option 11 | Disability understanding |
 
 **Expected:** Pattern 7 - "Conditional Position + Uncertainty + Disability Understanding"
 **Match Type:** `tiebreaker`
@@ -260,11 +314,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Test Q10A-4: Tiebreaker - Other CP2 Wins
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Option 7 only | Witnessed struggle |
-| L3 | Option 11 | Disability understanding |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Option 7 only | Witnessed struggle |
+| CP3 | Option 11 | Disability understanding |
 
 **Expected:** Pattern 4 - "Conditional Position + Witnessed Struggle + Disability Understanding"
 **Match Type:** `tiebreaker`
@@ -279,11 +333,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Test Q10A-5: CP1=1 Primary Match
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Very important |
-| L2 | Options 4, 5 | Provider bias + Uncertainty |
-| L3 | Option 9 | Team support |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Very important |
+| CP2 | Options 4, 5 | Provider bias + Uncertainty |
+| CP3 | Option 9 | Team support |
 
 **Expected:** Pattern 2 - "Absolute Position + Burden Fear + Team Support Need"
 **Match Type:** `primary`
@@ -298,11 +352,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Test Q10A-6: CP1=3 Primary Match
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 3 | Avoid aggressive intervention |
-| L2 | Options 6, 7 | Burden + Witnessed |
-| L3 | Option 9 | Team support |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 3 | Avoid aggressive intervention |
+| CP2 | Options 6, 7 | Burden + Witnessed |
+| CP3 | Option 9 | Team support |
 
 **Expected:** Pattern 6 - "Function-Focused + Burden Fear + Team Support"
 **Match Type:** `primary`
@@ -317,8 +371,8 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 
 ### Test Q10A-7: All 8 Patterns Coverage
 
-| Test | L1 | L2 | L3 | Expected Pattern |
-|------|----|----|----|--------------------|
+| Test | CP1 | CP2 | CP3 | Expected Pattern |
+|------|-----|-----|-----|--------------------|
 | 7a | 2 | [4] | 10 | Pattern 1 |
 | 7b | 1 | [6] | 9 | Pattern 2 |
 | 7c | 3 | [5] | 10 | Pattern 3 |
@@ -333,11 +387,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ## Q10B Test Cases
 
 ### Test Q10B-1: Primary Match
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Absolute position |
-| L2 | Options 4, 5 | Communication + Late-stage fear |
-| L3 | Option 8 | QOL research |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Absolute position |
+| CP2 | Options 4, 5 | Communication + Late-stage fear |
+| CP3 | Option 8 | QOL research |
 
 **Expected:** Pattern 1 - "Absolute + Communication Fear + QOL Research"
 **Match Type:** `primary`
@@ -351,11 +405,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10B/ppr/match/ \
 ---
 
 ### Test Q10B-2: Tiebreaker (Pattern 2 vs 5)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Conditional |
-| L2 | Options 4, 6 | Communication + Identity fear |
-| L3 | Option 9 | Family presence |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Conditional |
+| CP2 | Options 4, 6 | Communication + Identity fear |
+| CP3 | Option 9 | Family presence |
 
 **Expected:** Pattern 2 - "Conditional + Identity Fear + Family Presence"
 **Match Type:** `tiebreaker`
@@ -370,11 +424,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10B/ppr/match/ \
 ---
 
 ### Test Q10B-3: Pattern 5 Wins by Score
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Conditional |
-| L2 | Option 4 only | Communication fear |
-| L3 | Option 9 | Family presence |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Conditional |
+| CP2 | Option 4 only | Communication fear |
+| CP3 | Option 9 | Family presence |
 
 **Expected:** Pattern 5 - "Capacity Priority + Communication Fear + Family Presence"
 **Match Type:** `tiebreaker`
@@ -389,11 +443,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10B/ppr/match/ \
 ---
 
 ### Test Q10B-4: Multi-Preferred Pattern (Pattern 6)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 3 | Balance |
-| L2 | Options 4, 6 | Communication + Identity fear |
-| L3 | Option 8 | QOL research |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 3 | Balance |
+| CP2 | Options 4, 6 | Communication + Identity fear |
+| CP3 | Option 8 | QOL research |
 
 **Expected:** Pattern 6 - "Balance + Multiple Fears + QOL Research"
 **Match Type:** `primary`
@@ -410,11 +464,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10B/ppr/match/ \
 ## Q11 Test Cases
 
 ### Test Q11-1: Primary Match
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Comfort priority |
-| L2 | Options 4, 6 | Provider fear + Consciousness |
-| L3 | Option 10 | Evidence mind-changer |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Comfort priority |
+| CP2 | Options 4, 6 | Provider fear + Consciousness |
+| CP3 | Option 10 | Evidence mind-changer |
 
 **Expected:** Pattern 1 - "Comfort Priority + Provider Fear Concern + Evidence Mind-Changer"
 **Match Type:** `primary`
@@ -428,11 +482,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q11/ppr/match/ \
 ---
 
 ### Test Q11-2: Tiebreaker (Pattern 5 vs 8)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Comfort priority |
-| L2 | Options 8, 9 | Disparity + Cultural expression |
-| L3 | Option 15 | Advocacy tools |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Comfort priority |
+| CP2 | Options 8, 9 | Disparity + Cultural expression |
+| CP3 | Option 15 | Advocacy tools |
 
 **Expected:** Pattern 5 - "Comfort Priority + Disparity Awareness + Advocacy Tools Mind-Changer"
 **Match Type:** `tiebreaker`
@@ -447,11 +501,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q11/ppr/match/ \
 ---
 
 ### Test Q11-3: Pattern 8 Wins by Score
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Comfort priority |
-| L2 | Option 9 only | Cultural expression |
-| L3 | Option 15 | Advocacy tools |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Comfort priority |
+| CP2 | Option 9 only | Cultural expression |
+| CP3 | Option 15 | Advocacy tools |
 
 **Expected:** Pattern 8 - "Comfort Priority + Cultural Expression Concern + Advocacy Tools Mind-Changer"
 **Match Type:** `tiebreaker`
@@ -468,11 +522,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q11/ppr/match/ \
 ## Q12 Test Cases
 
 ### Test Q12-1: Primary Match
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Options 5, 6 | Identity loss + Quality of care |
-| L3 | Option 11 | Witnessing dignity |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Options 5, 6 | Identity loss + Quality of care |
+| CP3 | Option 11 | Witnessing dignity |
 
 **Expected:** Pattern 4 - "Quality Focused"
 **Match Type:** `primary`
@@ -486,11 +540,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q12/ppr/match/ \
 ---
 
 ### Test Q12-2: Independence Maximalist
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Very important |
-| L2 | Option 5 | Identity loss |
-| L3 | Option 15 | Resource awareness |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Very important |
+| CP2 | Option 5 | Identity loss |
+| CP3 | Option 15 | Resource awareness |
 
 **Expected:** Pattern 1 - "Independence Maximalist"
 **Match Type:** `primary`
@@ -504,11 +558,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q12/ppr/match/ \
 ---
 
 ### Test Q12-3: Structural Realist
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 3 | Not important |
-| L2 | Option 8 | Structural barriers |
-| L3 | Option 12 | Structural understanding |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 3 | Not important |
+| CP2 | Option 8 | Structural barriers |
+| CP3 | Option 12 | Structural understanding |
 
 **Expected:** Pattern 3 - "Structural Realist"
 **Match Type:** `primary`
@@ -524,11 +578,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q12/ppr/match/ \
 ## Edge Cases
 
 ### Edge Case 1: No CP2 Preferred Match (Tiebreaker defaults to priority)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Option 6 only | Burden (not preferred by either 4 or 7) |
-| L3 | Option 11 | Disability understanding |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Option 6 only | Burden (not preferred by either 4 or 7) |
+| CP3 | Option 11 | Disability understanding |
 
 **Expected:** Pattern 4 (higher priority wins when no CP2 preference matches)
 **Match Type:** `tiebreaker`
@@ -542,11 +596,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Edge Case 2: Multiple CP2 Selections (3 options)
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 2 | Somewhat important |
-| L2 | Options 4, 5, 7 | Provider bias + Uncertainty + Witnessed |
-| L3 | Option 11 | Disability understanding |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 2 | Somewhat important |
+| CP2 | Options 4, 5, 7 | Provider bias + Uncertainty + Witnessed |
+| CP3 | Option 11 | Disability understanding |
 
 **Expected:** Pattern 4 (has 7) or Pattern 7 (has 5) - both score 1, Pattern 4 wins by priority
 **Match Type:** `tiebreaker`
@@ -560,11 +614,11 @@ curl -X POST http://localhost:8000/api/v1/content/questions/Q10A/ppr/match/ \
 ---
 
 ### Edge Case 3: Single CP2 Selection
-| Layer | Select | Option Text |
-|-------|--------|-------------|
-| L1 | Option 1 | Very important |
-| L2 | Option 4 only | Provider bias |
-| L3 | Option 8 | Disability meeting |
+| Checkpoint | Select | Option Text |
+|------------|--------|-------------|
+| CP1 | Option 1 | Very important |
+| CP2 | Option 4 only | Provider bias |
+| CP3 | Option 8 | Disability meeting |
 
 **Expected:** Pattern 5 - "Absolute Position + Provider Bias + Disability Meeting"
 **Match Type:** `primary`
